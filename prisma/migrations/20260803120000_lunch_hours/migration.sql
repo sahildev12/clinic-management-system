@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "ClinicSetting" ADD COLUMN "lunchStartHour" INTEGER NOT NULL DEFAULT 13;
+ALTER TABLE "ClinicSetting" ADD COLUMN "lunchEndHour" INTEGER NOT NULL DEFAULT 14;

@@ -1,0 +1,536 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-heading), ui-serif, Georgia, serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --brand-teal: #00c2b2;
+  --brand-teal-dark: #00a89a;
+  --brand-sky: #4ba3e3;
+  --brand-navy: #1b3a6b;
+  --brand-green: #22c55e;
+  --brand-cream: #f7f4ee;
+  --brand-charcoal: #1a1a1a;
+  --brand-blue: #4ba3e3;
+  --brand-pink: #00c2b2;
+
+  --hero-navy: #123a68;
+  --hero-accent: #3f9de0;
+  --hero-teal: #11c5bc;
+  --hero-bg: #eef7fd;
+
+  /* Laptop hero canvas — fixed px so image crop never shifts */
+  --hero-site-header: 78px;
+  --hero-strip-height-laptop: 88px;
+  --hero-main-height-laptop: 600px;
+  --hero-doctor-image-width: 942px;
+  --hero-doctor-image-height: 600px;
+  --hero-doctor-image-position: 58% 12%;
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+}
+
+/* Booking slot list — navy theme scrollbar */
+.booking-slot-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--brand-teal) 55%, white) transparent;
+}
+.booking-slot-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.booking-slot-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.booking-slot-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--brand-teal) 55%, white);
+}
+
+@keyframes footer-sparkle-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translate3d(0, 0, 0) scale(0.85) rotate(0deg);
+    filter: drop-shadow(0 0 2px color-mix(in oklab, var(--brand-sky) 35%, transparent));
+  }
+  40% {
+    opacity: 0.95;
+    transform: translate3d(0, -10px, 0) scale(1.15) rotate(12deg);
+    filter: drop-shadow(0 0 10px color-mix(in oklab, var(--brand-sky) 75%, white));
+  }
+  70% {
+    opacity: 0.45;
+    transform: translate3d(4px, -4px, 0) scale(0.95) rotate(-6deg);
+    filter: drop-shadow(0 0 5px color-mix(in oklab, var(--brand-sky) 50%, transparent));
+  }
+}
+
+.footer-sparkle {
+  animation: footer-sparkle-twinkle var(--sparkle-duration, 3.6s) ease-in-out infinite;
+  animation-delay: var(--sparkle-delay, 0s);
+  will-change: transform, opacity, filter;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-sparkle {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
+/* Login — plasma orbs + soft motion */
+@keyframes login-plasma-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(18px, -14px, 0) scale(1.08);
+  }
+}
+
+@keyframes login-plasma-drift-slow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-22px, 16px, 0) scale(1.12);
+  }
+}
+
+@keyframes login-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes login-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes login-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.login-plasma-orb {
+  animation: login-plasma-drift 9s ease-in-out infinite;
+}
+
+.login-plasma-orb-slow {
+  animation: login-plasma-drift-slow 13s ease-in-out infinite;
+}
+
+.login-float {
+  animation: login-float 5.5s ease-in-out infinite;
+}
+
+.login-fade-in {
+  animation: login-fade-in 0.55s ease-out both;
+}
+
+.login-pulse {
+  animation: login-pulse 3.2s ease-in-out infinite;
+}
+
+.login-pulse-delay {
+  animation: login-pulse 3.2s ease-in-out infinite 0.8s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-plasma-orb,
+  .login-plasma-orb-slow,
+  .login-float,
+  .login-pulse,
+  .login-pulse-delay {
+    animation: none;
+  }
+
+  .login-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Site pages — soft entrance + pressable book CTA */
+@keyframes contact-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.contact-fade-in {
+  animation: contact-fade-in 0.6s ease-out both;
+}
+
+.contact-fade-in-delay {
+  animation: contact-fade-in 0.65s ease-out 0.12s both;
+}
+
+.brand-book-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  outline: none;
+  background-color: var(--brand-navy);
+  padding: 0.75rem 1.35rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 9999px;
+  transition: all ease 0.1s;
+  box-shadow: 0px 5px 0px 0px color-mix(in oklab, var(--brand-sky) 85%, white);
+  text-decoration: none;
+}
+
+.brand-book-btn:hover {
+  background-color: color-mix(in oklab, var(--brand-navy) 92%, black);
+}
+
+.brand-book-btn:active {
+  transform: translateY(5px);
+  box-shadow: 0px 0px 0px 0px color-mix(in oklab, var(--brand-sky) 85%, white);
+}
+
+.brand-book-btn:focus-visible {
+  outline: 2px solid var(--brand-sky);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-fade-in,
+  .contact-fade-in-delay {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .brand-book-btn {
+    transition: none;
+  }
+
+  .brand-book-btn:active {
+    transform: none;
+  }
+}
+
+/* Homepage hero — premium dental clinic layout */
+.hero-section {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
+.hero-main {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.hero-feature-strip {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* Desktop & laptop (1024+): hero fits viewport so feature strip stays visible */
+@media (min-width: 1024px) {
+  .hero-section {
+    height: min(
+      calc(100svh - var(--hero-site-header)),
+      calc(var(--hero-main-height-laptop) + var(--hero-strip-height-laptop))
+    );
+    max-height: min(
+      calc(100svh - var(--hero-site-header)),
+      calc(var(--hero-main-height-laptop) + var(--hero-strip-height-laptop))
+    );
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .hero-main {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .hero-feature-strip {
+    height: var(--hero-strip-height-laptop);
+    min-height: var(--hero-strip-height-laptop);
+    max-height: var(--hero-strip-height-laptop);
+    flex-shrink: 0;
+  }
+
+  .hero-feature-strip > ul {
+    height: 100%;
+    align-items: center;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+/* Slightly narrower frame on smaller laptops */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  :root {
+    --hero-doctor-image-width: 860px;
+  }
+}
+
+/* Standard laptop — user-tuned width */
+@media (min-width: 1280px) and (max-width: 1535px) {
+  :root {
+    --hero-doctor-image-width: 942px;
+  }
+}
+
+/* Large screens */
+@media (min-width: 1536px) {
+  :root {
+    --hero-doctor-image-width: 980px;
+    --hero-main-height-laptop: 620px;
+    --hero-doctor-image-height: 620px;
+  }
+}
+
+/* Soft left-side glow */
+.hero-bg-glow-left {
+  position: absolute;
+  top: -6%;
+  left: -4%;
+  width: min(42vw, 500px);
+  height: min(42vw, 500px);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(238, 247, 253, 0) 72%);
+}
+
+/* Subtle pale wave on left half */
+.hero-bg-glow-mid {
+  position: absolute;
+  top: 22%;
+  left: 8%;
+  width: min(28vw, 340px);
+  height: min(26vw, 300px);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 228, 248, 0.35) 0%, rgba(238, 247, 253, 0) 72%);
+}
+
+.hero-image-column {
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .hero-image-column {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 38%;
+    margin-top: 0;
+    min-height: 0;
+  }
+}
+
+.hero-image-shell {
+  height: 100%;
+  min-height: 100%;
+  background: #e8f3fa;
+  isolation: isolate;
+}
+
+.hero-doctor-image-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Mobile / tablet */
+.hero-doctor-image {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover;
+  object-position: 50% 12%;
+}
+
+@media (min-width: 1024px) {
+  .hero-image-shell {
+    clip-path: url(#hero-image-clip);
+    -webkit-clip-path: url(#hero-image-clip);
+  }
+
+  .hero-doctor-image-wrap {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: var(--hero-doctor-image-width);
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Fixed 942px panel — cover without Next.js fill fighting width */
+  .hero-doctor-image {
+    position: static !important;
+    display: block;
+    width: var(--hero-doctor-image-width) !important;
+    height: 100% !important;
+    max-width: none !important;
+    object-fit: cover !important;
+    object-position: var(--hero-doctor-image-position) !important;
+  }
+}
