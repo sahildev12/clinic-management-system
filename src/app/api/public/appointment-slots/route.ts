@@ -21,9 +21,10 @@ export async function GET(request: Request) {
   }
 
   const clinicSlug = searchParams.get("clinicSlug")?.trim() || undefined;
+  const providerId = searchParams.get("providerId")?.trim() || undefined;
 
   try {
-    const result = await listPublicAppointmentSlots(date, { clinicSlug });
+    const result = await listPublicAppointmentSlots(date, { clinicSlug, providerId });
     return Response.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not load slots";

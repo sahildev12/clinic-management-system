@@ -29,6 +29,12 @@ type Props = {
   onSlotChange: (slot: string | undefined) => void;
   durationMinutes?: number;
   clinicSlug?: string;
+  /** When set, slots and working days come from this doctor's own schedule. */
+  providerId?: string;
+  /** Weekdays (0=Sun … 6=Sat) the chosen doctor works. Falls back to Mon–Sat. */
+  workDays?: number[];
+  /** When set, the picker is locked and shows this message (e.g. "Select a doctor first"). */
+  blockedMessage?: string;
 };
 
 export function BookingSlotPicker({
@@ -38,6 +44,9 @@ export function BookingSlotPicker({
   onSlotChange,
   durationMinutes = 30,
   clinicSlug,
+  providerId,
+  workDays,
+  blockedMessage,
 }: Props) {
   const [hour12, setHour12] = useState(true);
   const [slots, setSlots] = useState<SlotRow[]>([]);
@@ -49,7 +58,7 @@ export function BookingSlotPicker({
   const dateKey = selectedDate ? toLocalDateKey(selectedDate) : null;
 
   useEffect(() => {
-    if (!dateKey || !selectedDate) {
+    if (!dateKey || !selectedDate || blockedMessage) {
       setSlots([]);
       setClosed(false);
       setError(null);
@@ -63,7 +72,7 @@ export function BookingSlotPicker({
     fetch(
       `/api/public/appointment-slots?date=${encodeURIComponent(dateKey)}${
         clinicSlug ? `&clinicSlug=${encodeURIComponent(clinicSlug)}` : ""
-      }`
+      }${providerId ? `&providerId=${encodeURIComponent(providerId)}` : ""}`
     )
       .then(async (res) => {
         const data = await res.json().catch(() => ({}));
@@ -98,7 +107,7 @@ export function BookingSlotPicker({
     };
     // intentionally omit selectedSlot/onSlotChange to avoid refetch loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateKey, clinicSlug]);
+  }, [dateKey, clinicSlug, providerId, blockedMessage]);
 
   useEffect(() => {
     if (loading || !slotListRef.current || slots.length === 0) return;
@@ -173,7 +182,8 @@ export function BookingSlotPicker({
             startMonth={today}
             endMonth={maxDate}
             disabled={(date) => {
-              return isOutsidePublicBookingWindow(date) || isClinicClosedDay(date);
+              if (blockedMessage || isOutsidePublicBookingWindow(date)) return true;
+              return workDays ? !workDays.includes(date.getDay()) : isClinicClosedDay(date);
             }}
             className="w-full rounded-xl border border-white/10 bg-white/5 p-1.5 text-white [--cell-radius:0.65rem] [--cell-size:2rem]"
             classNames={{
@@ -232,14 +242,18 @@ export function BookingSlotPicker({
             </div>
           </div>
 
-          {!selectedDate ? (
+          {blockedMessage ? (
+            <p className="py-10 text-center text-sm text-white/60">{blockedMessage}</p>
+          ) : !selectedDate ? (
             <p className="py-10 text-center text-sm text-white/50">Choose a date to see open slots.</p>
           ) : loading ? (
             <p className="py-10 text-center text-sm text-white/50">Loading slots…</p>
           ) : error ? (
             <p className="py-10 text-center text-sm text-red-200">{error}</p>
           ) : closed ? (
-            <p className="py-10 text-center text-sm text-white/50">Clinic is closed on this day.</p>
+            <p className="py-10 text-center text-sm text-white/50">
+              {providerId ? "This doctor is not available on this day." : "Clinic is closed on this day."}
+            </p>
           ) : slots.length === 0 ? (
             <p className="py-10 text-center text-sm text-white/50">No slots available.</p>
           ) : slots.every((slot) => !slot.available) ? (

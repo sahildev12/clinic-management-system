@@ -577,6 +577,32 @@ export async function listProviders(filters?: {
   });
 }
 
+/** Active doctors patients can pick on the public booking form (with their schedule summary). */
+export async function listPublicDoctors(clinicId?: string) {
+  const resolvedClinicId = clinicId ?? (await getClinicSettings()).clinicId;
+  const doctors = await prisma.provider.findMany({
+    where: { clinicId: resolvedClinicId, providerType: "DOCTOR", active: true },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      specialty: true,
+      category: true,
+      avatarUrl: true,
+      schedule: { select: { workDays: true, appointmentDurationMinutes: true } },
+    },
+  });
+  return doctors.map((doctor) => ({
+    id: doctor.id,
+    name: doctor.name,
+    specialty: doctor.specialty,
+    category: doctor.category,
+    avatarUrl: doctor.avatarUrl,
+    workDays: normalizeWorkDays(doctor.schedule?.workDays),
+    durationMinutes: doctor.schedule?.appointmentDurationMinutes ?? BOOKING_SLOT_MINUTES,
+  }));
+}
+
 export async function getStaffModuleAccessByUserId(userId: string) {
   const provider = await prisma.provider.findFirst({
     where: { userId },
@@ -1476,6 +1502,7 @@ export async function createPublicAppointment(input: {
   notes?: string | null;
   paymentPreference: "ONLINE" | "COUNTER";
   clinicSlug?: string | null;
+  providerId?: string | null;
 }) {
   const dateTime = assertValidDateTime(input.dateTime, "Preferred date & time");
   if (dateTime.getTime() < Date.now()) {
@@ -1485,9 +1512,6 @@ export async function createPublicAppointment(input: {
     throw new ValidationError(
       `Bookings are only open for the next ${BOOKING_MAX_DAYS_AHEAD} days`
     );
-  }
-  if (isClinicClosedDay(dateTime)) {
-    throw new ValidationError("The clinic is closed on Sundays");
   }
 
   let clinicId: string;
@@ -1499,27 +1523,58 @@ export async function createPublicAppointment(input: {
     clinicId = (await getClinicSettings()).clinicId;
   }
 
+  // Optional: patient picked a specific doctor. Then that doctor's own schedule rules apply.
+  const providerId = emptyToNull(input.providerId);
+  let doctorSchedule: Awaited<ReturnType<typeof resolveScheduleForSlots>> = null;
+  if (providerId) {
+    const doctor = await prisma.provider.findFirst({
+      where: { id: providerId, clinicId, providerType: "DOCTOR", active: true },
+      select: { id: true },
+    });
+    if (!doctor) throw new ValidationError("The selected doctor is not available");
+    doctorSchedule = await resolveScheduleForSlots(providerId, clinicId);
+  }
+
   const settings = await getClinicSettings(clinicId);
-  const lunch = normalizeLunchHours(settings.lunchStartHour, settings.lunchEndHour);
+  const lunch = doctorSchedule
+    ? {
+        lunchStartHour: doctorSchedule.schedule.lunchStartHour,
+        lunchEndHour: doctorSchedule.schedule.lunchEndHour,
+      }
+    : normalizeLunchHours(settings.lunchStartHour, settings.lunchEndHour);
+  const slotMinutes = doctorSchedule?.slotMinutes ?? BOOKING_SLOT_MINUTES;
+  const dayStartHour = doctorSchedule?.schedule.workStartHour ?? 9;
+  const dayEndHour = doctorSchedule?.schedule.workEndHour ?? 18;
+
+  if (doctorSchedule) {
+    if (!isProviderWorkDay(dateTime, doctorSchedule.workDays)) {
+      throw new ValidationError("This doctor is not available on the selected day");
+    }
+  } else if (isClinicClosedDay(dateTime)) {
+    throw new ValidationError("The clinic is closed on Sundays");
+  }
+
   const hour = dateTime.getHours();
   if (hour >= lunch.lunchStartHour && hour < lunch.lunchEndHour) {
     throw new ValidationError("That time falls in the lunch break");
   }
-  if (hour < 9 || hour >= 18) {
+  if (hour < dayStartHour || hour >= dayEndHour) {
     throw new ValidationError("Please choose a time during clinic hours");
   }
 
   const patient = await findOrCreatePatientByPhone(input, clinicId);
 
   return prisma.$transaction(async (tx) => {
-    const slotEnd = new Date(dateTime.getTime() + BOOKING_SLOT_MINUTES * 60_000);
+    const slotEnd = new Date(dateTime.getTime() + slotMinutes * 60_000);
     const dayStart = startOfLocalDay(dateTime);
     const dayEnd = new Date(dayStart);
     dayEnd.setHours(23, 59, 59, 999);
 
+    // With a doctor chosen, only that doctor's bookings block the slot.
     const sameDay = await tx.appointment.findMany({
       where: {
         clinicId,
+        ...(providerId ? { providerId } : {}),
         dateTime: { gte: dayStart, lte: dayEnd },
         status: { not: "CANCELLED" },
       },
@@ -1539,7 +1594,9 @@ export async function createPublicAppointment(input: {
       data: {
         clinicId,
         patientId: patient.id,
+        providerId,
         dateTime,
+        durationMinutes: slotMinutes,
         status: "PENDING",
         source: "WEBSITE",
         paymentPreference: input.paymentPreference,
@@ -1558,6 +1615,7 @@ export async function createPublicAppointment(input: {
         bookingReference,
         patientId: patient.id,
         paymentPreference: input.paymentPreference,
+        ...(providerId ? { providerId } : {}),
       },
     });
 

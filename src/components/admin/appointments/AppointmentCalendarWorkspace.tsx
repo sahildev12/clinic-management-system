@@ -192,7 +192,7 @@ export function AppointmentCalendarWorkspace({
 
   const anchorKey = filters.anchor;
 
-  const loadCalendarAppointments = useCallback(async () => {
+  const loadCalendarAppointments = useCallback(async (silent = false) => {
     if (view === "list") return;
 
     const range = getRangeForView(view, parseDateKey(anchorKey));
@@ -206,16 +206,18 @@ export function AppointmentCalendarWorkspace({
     if (filters.providerId) params.set("providerId", filters.providerId);
     if (filters.category) params.set("category", filters.category);
 
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       const res = await fetch(`/api/admin/appointments?${params.toString()}`);
       const data = await res.json().catch(() => []);
       if (!res.ok) throw new Error(data.error ?? "Could not load appointments");
       setAppointments(data);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not load appointments");
+      if (!silent) {
+        toast.error(error instanceof Error ? error.message : "Could not load appointments");
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [
     view,
@@ -246,6 +248,14 @@ export function AppointmentCalendarWorkspace({
     filters.category,
     loadCalendarAppointments,
   ]);
+
+  // A new online booking arrived (see NewAppointmentAlert): reload the calendar quietly.
+  useEffect(() => {
+    if (view === "list") return;
+    const onNewBooking = () => void loadCalendarAppointments(true);
+    window.addEventListener("clinic-appointments-changed", onNewBooking);
+    return () => window.removeEventListener("clinic-appointments-changed", onNewBooking);
+  }, [view, loadCalendarAppointments]);
 
   useEffect(() => {
     if (searchParams.get("new") !== "1") return;

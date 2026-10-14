@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminTopBar } from "@/components/admin/AdminTopBar";
+import { NewAppointmentAlert } from "@/components/admin/NewAppointmentAlert";
 import { StaffRouteGuard } from "@/components/admin/StaffRouteGuard";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -81,6 +82,7 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
           {children}
         </StaffRouteGuard>
       </main>
+      <NewAppointmentAlert />
     </AdminShell>
   );
 }

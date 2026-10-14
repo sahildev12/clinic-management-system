@@ -24,17 +24,43 @@ import {
   combineDateAndSlot,
   isClinicClosedDay,
 } from "@/lib/booking-slots";
+import { doctorCategoryLabel } from "@/lib/doctor-categories";
+import { formatWorkDaysLabel } from "@/lib/provider-schedule";
 import { isValidIndiaMobile, sanitizeIndiaMobileDigits, toIndiaE164 } from "@/lib/phone";
 import { toDateTimePayload } from "@/components/ui/date-time-picker-field";
 import { cn } from "@/lib/utils";
 
-function defaultBookingDate(): Date {
+/** First bookable day: skips days the clinic (or the chosen doctor) does not work. */
+function defaultBookingDate(workDays?: number[]): Date {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
-  while (isClinicClosedDay(date)) {
+  for (let i = 0; i < 14; i += 1) {
+    const closed = workDays ? !workDays.includes(date.getDay()) : isClinicClosedDay(date);
+    if (!closed) break;
     date.setDate(date.getDate() + 1);
   }
   return date;
+}
+
+export type BookingDoctor = {
+  id: string;
+  name: string;
+  specialty?: string | null;
+  category?: string | null;
+  avatarUrl?: string | null;
+  workDays?: number[];
+  durationMinutes?: number;
+};
+
+function doctorDisplayName(name: string) {
+  return /^dr\.?\s/i.test(name.trim()) ? name.trim() : `Dr. ${name.trim()}`;
+}
+
+function doctorSpecialization(doctor: BookingDoctor) {
+  const text = doctor.specialty?.trim();
+  if (text) return text;
+  const label = doctorCategoryLabel(doctor.category);
+  return label === "—" ? "" : label;
 }
 
 const highlights = [
@@ -66,6 +92,7 @@ type FieldErrors = {
   name?: string;
   phone?: string;
   service?: string;
+  doctor?: string;
   slot?: string;
   paymentPreference?: string;
 };
@@ -90,7 +117,7 @@ export function AppointmentBookingForm({
   lunchBreakLabel?: string;
   clinicSlug?: string;
   clinicName?: string;
-  doctors?: { id: string; name: string; category?: string | null }[];
+  doctors?: BookingDoctor[];
 }) {
   const [saving, setSaving] = useState(false);
   const [bookingReference, setBookingReference] = useState<string | null>(null);
@@ -101,10 +128,23 @@ export function AppointmentBookingForm({
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [service, setService] = useState("");
+  const [providerId, setProviderId] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>(() => defaultBookingDate());
   const [selectedSlot, setSelectedSlot] = useState<string | undefined>();
   const [paymentPreference, setPaymentPreference] = useState<PaymentPreference>("ONLINE");
   const [errors, setErrors] = useState<FieldErrors>({});
+
+  const selectedDoctor = doctors.find((doctor) => doctor.id === providerId);
+  const slotMinutes = selectedDoctor?.durationMinutes ?? BOOKING_SLOT_MINUTES;
+
+  function handleDoctorChange(id: string) {
+    setProviderId(id);
+    setSelectedSlot(undefined);
+    const doctor = doctors.find((item) => item.id === id);
+    // Jump to the doctor's next working day and reload their time table.
+    setSelectedDate(defaultBookingDate(doctor?.workDays));
+    setErrors((prev) => ({ ...prev, doctor: undefined, slot: undefined }));
+  }
 
   function handleDateChange(date: Date | undefined) {
     if (!date) return;
@@ -119,6 +159,7 @@ export function AppointmentBookingForm({
     if (!phone.trim()) next.phone = "Phone number is required";
     else if (!isValidIndiaMobile(phone)) next.phone = "Enter a valid 10-digit mobile number";
     if (!service.trim()) next.service = "Please select a treatment";
+    if (doctors.length > 0 && !providerId) next.doctor = "Please select a doctor";
     if (!selectedSlot) next.slot = "Please pick a time slot";
     if (!paymentPreference) next.paymentPreference = "Please choose how you would like to pay";
     return next;
@@ -135,11 +176,19 @@ export function AppointmentBookingForm({
           ? "phone"
           : nextErrors.service
             ? "service"
-            : nextErrors.slot
+            : nextErrors.doctor
+              ? "doctor"
+              : nextErrors.slot
               ? "booking-slot-picker"
               : "payment-preference";
       requestAnimationFrame(() => focusField(firstId));
-      if (nextErrors.slot && !nextErrors.name && !nextErrors.phone && !nextErrors.service) {
+      if (
+        nextErrors.slot &&
+        !nextErrors.name &&
+        !nextErrors.phone &&
+        !nextErrors.service &&
+        !nextErrors.doctor
+      ) {
         toast.error(nextErrors.slot);
       }
       return;
@@ -162,6 +211,7 @@ export function AppointmentBookingForm({
       notes: notes.trim() ? `${treatmentNote}\n${notes.trim()}` : treatmentNote,
       paymentPreference,
       ...(clinicSlug ? { clinicSlug } : {}),
+      ...(providerId ? { providerId } : {}),
     };
 
     const res = await fetch("/api/public/appointments", {
@@ -186,6 +236,7 @@ export function AppointmentBookingForm({
     setEmail("");
     setNotes("");
     setService("");
+    setProviderId("");
     setSelectedDate(defaultBookingDate());
     setSelectedSlot(undefined);
     setPaymentPreference("ONLINE");
@@ -378,6 +429,45 @@ export function AppointmentBookingForm({
             </div>
           </div>
 
+          {doctors.length > 0 ? (
+            <div className={cn("space-y-2", FIELD_SCROLL_MT)}>
+              <Label htmlFor="doctor">Doctor</Label>
+              <AppSelect
+                id="doctor"
+                value={providerId}
+                onValueChange={handleDoctorChange}
+                placeholder="Select a doctor"
+                aria-invalid={Boolean(errors.doctor)}
+                aria-describedby={errors.doctor ? "doctor-error" : undefined}
+                options={doctors.map((doctor) => {
+                  const specialization = doctorSpecialization(doctor);
+                  return {
+                    value: doctor.id,
+                    label: specialization
+                      ? `${doctorDisplayName(doctor.name)} — ${specialization}`
+                      : doctorDisplayName(doctor.name),
+                  };
+                })}
+              />
+              {selectedDoctor ? (
+                <p className="text-xs text-muted-foreground">
+                  {[
+                    doctorSpecialization(selectedDoctor),
+                    selectedDoctor.workDays ? formatWorkDaysLabel(selectedDoctor.workDays) : "",
+                    `${slotMinutes}-minute visits`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              ) : null}
+              {errors.doctor ? (
+                <p id="doctor-error" className="text-xs text-destructive">
+                  {errors.doctor}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <Label htmlFor="notes">Notes (optional)</Label>
@@ -413,8 +503,15 @@ export function AppointmentBookingForm({
               setSelectedSlot(slot);
               if (errors.slot) setErrors((prev) => ({ ...prev, slot: undefined }));
             }}
-            durationMinutes={BOOKING_SLOT_MINUTES}
+            durationMinutes={slotMinutes}
             clinicSlug={clinicSlug}
+            providerId={providerId || undefined}
+            workDays={selectedDoctor?.workDays}
+            blockedMessage={
+              doctors.length > 0 && !providerId
+                ? "Select a doctor to see their available times."
+                : undefined
+            }
           />
           {errors.slot ? (
             <p className="mt-2 text-center text-xs text-destructive">{errors.slot}</p>

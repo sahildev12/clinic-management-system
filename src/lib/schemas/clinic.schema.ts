@@ -26,6 +26,7 @@ const providerModuleAccessSchema = z.array(
     "dashboard",
     "patients",
     "appointments",
+    "notes",
     "payments",
     "finance",
     "reminders",
@@ -268,6 +269,7 @@ export const publicAppointmentSchema = z.object({
     message: "Please choose how you would like to pay",
   }),
   clinicSlug: z.string().optional().or(z.literal("")),
+  providerId: z.string().optional().or(z.literal("")),
 });
 
 export type PublicAppointmentInput = z.infer<typeof publicAppointmentSchema>;
